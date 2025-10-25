@@ -1,6 +1,7 @@
-import React, { useRef } from 'react';
-import { View, StyleSheet, Alert, useWindowDimensions, Pressable } from 'react-native';
+import React, { useRef, useState, useCallback } from 'react';
+import { View, StyleSheet, Alert, useWindowDimensions, Pressable, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import AppText from '../shared/ui/AppText';
 
@@ -16,19 +17,32 @@ export default function MainPage({ navigation }) {
   const cameraRef = useRef(null);
   const { width } = useWindowDimensions();
 
+  // 중복 탭 방지
+  const [isCapturing, setIsCapturing] = useState(false);
+  useFocusEffect(
+    useCallback(() => {
+      // 이 화면에 복귀하면 다시 활성화
+      setIsCapturing(false);
+      return undefined;
+    }, [])
+  );
+
   const previewWidth = width - 32;
   const previewHeight = Math.round((4 / 3) * previewWidth); // 3:4 (세로형)
 
   const onCapture = async () => {
+    if (isCapturing) return;
+    setIsCapturing(true);
     try {
-      if (!cameraRef.current) return;
+      if (!cameraRef.current) throw new Error('camera-not-ready');
       const photo = await cameraRef.current.takePhoto({ flash: 'off' });
-      navigation.navigate('InfoPage', {
-        summary: '임시 요약: 청구 24,800원 · 기한 10월 31일.',
-        photo,
-      });
-    } catch {
+
+      // 네트워크 업로드는 InfoPage에서 처리 (사진만 전달)
+      navigation.navigate('InfoPage', { photo });
+      // 성공 시에는 InfoPage로 이동하므로 여기서 풀지 않음
+    } catch (e) {
       Alert.alert('촬영 실패', '카메라 상태를 확인해주세요.');
+      setIsCapturing(false); // 실패 시에만 다시 활성화
     }
   };
 
@@ -36,7 +50,13 @@ export default function MainPage({ navigation }) {
     <View style={[styles.root, { paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right }]}>
       {/* 상단 로고 */}
       <View style={styles.header}>
-        <AppText size={22} style={styles.brand}>디누리</AppText>
+        <Image
+          source={require('../assets/images/Text_dinuri.png')}
+          style={styles.brandImage}
+          resizeMode="contain"
+          accessible
+          accessibilityLabel="디누리"
+        />
       </View>
 
       {/* 본문: 미리보기 + (유동 비율) 촬영:하단버튼 = 2:1 */}
@@ -62,8 +82,15 @@ export default function MainPage({ navigation }) {
         <View style={styles.bottomArea}>
           {/* 촬영(2) */}
           <View style={styles.captureArea}>
-            <Pressable style={styles.captureBtn} accessibilityRole="button" onPress={onCapture}>
-              <AppText size={20} tight style={styles.captureText}>촬영</AppText>
+            <Pressable
+              style={[styles.captureBtn, isCapturing && styles.captureBtnDisabled]}
+              accessibilityRole="button"
+              disabled={isCapturing}
+              onPress={onCapture}
+            >
+              <AppText size={20} tight style={styles.captureText}>
+                {isCapturing ? '처리 중…' : '촬영'}
+              </AppText>
             </Pressable>
           </View>
 
@@ -72,7 +99,7 @@ export default function MainPage({ navigation }) {
             <Pressable
               style={styles.secondaryBtn}
               accessibilityRole="button"
-              onPress={() => navigation.navigate('HistoryPage')}
+              //onPress={() => navigation.navigate('HistoryPage')}
             >
               <AppText size={20} tight style={styles.secondaryText}>이용내역</AppText>
             </Pressable>
@@ -92,8 +119,10 @@ export default function MainPage({ navigation }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
-  header: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
-  brand: { fontWeight: '800', color: BRAND },
+
+  // 헤더는 좌우 여백을 미리보기와 맞춰 로고 정렬
+  header: { paddingTop: 8, paddingBottom: 4},
+  brandImage: { width: 140, height: 28, alignSelf: 'flex-start', marginLeft: -8 },
 
   // 본문 레이아웃: 미리보기는 상단, 하단은 유동 비율(촬영2 : 하단 버튼1)
   body: { flex: 1, paddingHorizontal: 16, justifyContent: 'flex-start' },
@@ -129,6 +158,7 @@ const styles = StyleSheet.create({
     minHeight: 96,
     paddingVertical: 12,
   },
+  captureBtnDisabled: { opacity: 0.6 },
   captureText: { color: '#fff', fontWeight: '800' },
 
   // 하단 두 버튼: 부모(rowArea) 높이를 가득 채움
