@@ -1,9 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+// src/pages/SettingsPage.js
+import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { View, Pressable, StyleSheet, Animated, Easing } from 'react-native';
-import AppText from '../shared/ui/AppText';
-import { useTypography } from '../shared/model/typography';
-import BackIcon from '../assets/images/Button_Back.svg';
+import { View, Pressable, StyleSheet } from 'react-native';
+import AppText from '../widgets/AppText';
+import { useTypography } from '../entities/typography';
+import BackIcon from '../shared/assets/images/Button_Back.svg';
+import Toggle from '../widgets/Toggle';
 
 import pkg from '../../package.json';
 import appJson from '../../app.json';
@@ -16,55 +18,6 @@ const APP_VERSION =
     (appJson?.expo && appJson.expo.version) ||
     (pkg && pkg.version) ||
     'unknown';
-
-/**
- * Custom Toggle (no native Switch). Animated thumb & background.
- * — 크기 확대(시니어용), 대비 강화
- */
-function Toggle({ value, onValueChange, disabled = false }) {
-  const anim = useRef(new Animated.Value(value ? 1 : 0)).current;
-
-  useEffect(() => {
-    Animated.timing(anim, {
-      toValue: value ? 1 : 0,
-      duration: 160,
-      easing: Easing.out(Easing.quad),
-      useNativeDriver: false,
-    }).start();
-  }, [value, anim]);
-
-  const translateX = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 26], // 64x38 트랙, 썸 32, 패딩 3 → 이동량 26
-  });
-
-  const bgColor = anim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['#CBD5E1', BRAND],
-  });
-
-  const onPress = () => {
-    if (disabled) return;
-    onValueChange?.(!value);
-  };
-
-  return (
-      <Pressable
-          onPress={onPress}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: value, disabled }}
-          style={({ pressed }) => [
-            styles.toggleBase,
-            { opacity: disabled ? 0.5 : pressed ? 0.9 : 1 },
-          ]}
-          hitSlop={10}
-      >
-        <Animated.View style={[styles.toggleTrack, { backgroundColor: bgColor }]}>
-          <Animated.View style={[styles.toggleThumb, { transform: [{ translateX }] }]} />
-        </Animated.View>
-      </Pressable>
-  );
-}
 
 export default function SettingsPage({ navigation }) {
   const { mode, setMode, autoTts, setAutoTts } = useTypography();
@@ -94,7 +47,7 @@ export default function SettingsPage({ navigation }) {
 
   return (
       <SafeAreaView style={styles.safe} edges={['top','left','right','bottom']}>
-        {/* 헤더: 뒤로가기 + 제목(왼쪽 정렬) */}
+        {/* 헤더: 뒤로가기 + 제목 */}
         <View style={styles.headerRow}>
           <Pressable
               accessibilityRole="button"
@@ -169,23 +122,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: -10,
   },
-  titleWrap: {
-    flex: 1,
-    height: HEADER_H,
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    fontWeight: '800',
-    color: '#0B0B0B',
-    marginLeft: -10,
-  },
+  titleWrap: { flex: 1, height: HEADER_H, justifyContent: 'center' },
+  headerTitle: { fontWeight: '800', color: '#0B0B0B', marginLeft: -10 },
 
-  section: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 4,
-    gap: 10,
-  },
+  section: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4, gap: 10 },
   sectionTitle: { fontWeight: '800', color: '#0B0B0B' },
   sectionHelp: { color: '#475569' },
 
@@ -198,20 +138,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 14,
   },
-  sizeItemActive: {
-    borderColor: BRAND,
-    backgroundColor: '#E0F2FE',
-  },
+  sizeItemActive: { borderColor: BRAND, backgroundColor: '#E0F2FE' },
   sizeItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   radio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#94A3B8',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    width: 22, height: 22, borderRadius: 11, borderWidth: 2,
+    borderColor: '#94A3B8', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff',
   },
   radioActive: { borderColor: BRAND },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: BRAND },
@@ -221,48 +152,18 @@ const styles = StyleSheet.create({
   sizeHint: { color: '#64748B', marginTop: 2 },
 
   toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: RADIUS,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 6,
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: '#F8FAFC', borderRadius: RADIUS, borderWidth: 1, borderColor: '#E2E8F0',
+    paddingVertical: 14, paddingHorizontal: 16, marginTop: 6,
   },
   toggleLabel: { color: '#0B0B0B', fontWeight: '800' },
-
-  toggleBase: { width: 64, height: 38 },
-  toggleTrack: {
-    flex: 1,
-    borderRadius: 19,
-    padding: 3,
-    justifyContent: 'center',
-  },
-  toggleThumb: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#fff',
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-  },
 
   version: { color: '#6B7280' },
 
   footer: { marginTop: 'auto', padding: 16 },
   primary: {
-    backgroundColor: BRAND,
-    paddingVertical: 18,
-    minHeight: 56,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: BRAND, paddingVertical: 18, minHeight: 56, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center',
   },
   primaryText: { color: '#fff', fontWeight: '800' },
 });

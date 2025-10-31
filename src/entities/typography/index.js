@@ -1,4 +1,4 @@
-// src/shared/model/typography.js
+// src/entities/typography/index.js
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -27,7 +27,6 @@ export function TypographyProvider({ children }) {
     const [mode, setModeState] = useState('normal');
     const [autoTts, setAutoTtsState] = useState(true);
 
-    // 초기 로드: 저장된 설정 복원
     useEffect(() => {
         (async () => {
             try {
@@ -45,7 +44,6 @@ export function TypographyProvider({ children }) {
         })();
     }, []);
 
-    // setter: 영구 저장 포함
     const setMode = useCallback(async (next) => {
         setModeState(next);
         try { await AsyncStorage.setItem(STORAGE_KEYS.mode, next); } catch {}

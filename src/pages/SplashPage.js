@@ -1,3 +1,4 @@
+// src/pages/SplashPage.js
 import React, { useEffect } from 'react';
 import { View, StyleSheet, Alert, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -22,7 +23,7 @@ export default function SplashPage() {
     return (
         <View style={styles.container}>
             <Image
-                source={require('../assets/images/Icon_dinuri.png')}
+                source={require('../shared/assets/images/Icon_dinuri.png')}
                 style={styles.logo}
                 resizeMode="contain"
                 accessible
