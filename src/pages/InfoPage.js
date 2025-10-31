@@ -16,8 +16,9 @@ import RNBlobUtil from 'react-native-blob-util';
 import AppText from '../shared/ui/AppText';
 import { useTypography } from '../shared/model/typography';
 import Clipboard from '@react-native-clipboard/clipboard';
+import { API_URL } from '@env';
 
-const API_BASE = 'https://dinuri.gbnam.dev';
+const API_BASE = (API_URL || '').trim().replace(/\/+$/, '');
 
 const BRAND = '#0EA5E9';
 const RADIUS = 16;
@@ -249,6 +250,11 @@ END:VCALENDAR`;
         setErrorMsg('');
         setTtsUri(null);
         setShouldPlay(false);
+        if (!API_BASE) {
+          setLoading(false);
+          setErrorMsg('서버 주소가 설정되지 않았습니다. .env의 API_URL을 확인해 주세요.');
+          return;
+        }
 
         const uri = photo?.path?.startsWith('file://') ? photo.path : `file://${photo?.path}`;
         const name = (photo?.path?.split('/')?.pop() || 'image.jpg').replace(/\?.*$/, '');
@@ -319,6 +325,11 @@ END:VCALENDAR`;
         setErrorMsg('');
         setTtsUri(null);
         setShouldPlay(false);
+        if (!API_BASE) {
+          setLoading(false);
+          setErrorMsg('서버 주소가 설정되지 않았습니다. .env의 API_URL을 확인해 주세요.');
+          return;
+        }
 
         const rawSum = route?.params?.summary || '';
         const cleanSum = (rawSum || '').replace(/\s*\/\s*/g, ' ').trim();
