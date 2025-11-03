@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, FlatList, Pressable, StyleSheet } from 'react-native';
-import AppText from '../widgets/AppText';
+import AppText from '../shared/ui/AppText';
 import BackIcon from '../shared/assets/images/Button_Back.svg';
 
 const BRAND = '#0EA5E9';

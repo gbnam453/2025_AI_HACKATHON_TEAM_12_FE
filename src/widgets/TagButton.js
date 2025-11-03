@@ -1,7 +1,7 @@
 // src/widgets/TagButton.js
 import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
-import AppText from './AppText';
+import AppText from '../shared/ui/AppText';
 
 export default function TagButton({ label, onPress, disabled = false, variant = 'secondary' }) {
     return (

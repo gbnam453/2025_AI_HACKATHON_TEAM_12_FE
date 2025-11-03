@@ -1,4 +1,4 @@
-// src/entities/typography/index.js
+// src/entities/typography/typography.js
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

@@ -2,8 +2,8 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { View, Pressable, StyleSheet } from 'react-native';
-import AppText from '../widgets/AppText';
-import { useTypography } from '../entities/typography';
+import AppText from '../shared/ui/AppText';
+import { useTypography } from '../shared/model/typography';
 import BackIcon from '../shared/assets/images/Button_Back.svg';
 import Toggle from '../widgets/Toggle';
 

@@ -1,7 +1,7 @@
 // src/widgets/LoadingOverlay.js
 import React from 'react';
 import { View, ActivityIndicator, Pressable, StyleSheet } from 'react-native';
-import AppText from './AppText';
+import AppText from '../shared/ui/AppText';
 
 const BRAND = '#0EA5E9';
 

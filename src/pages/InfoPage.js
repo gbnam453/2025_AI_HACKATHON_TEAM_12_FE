@@ -4,13 +4,13 @@ import { View, Pressable, StyleSheet, ScrollView, Alert, Linking } from 'react-n
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import Clipboard from '@react-native-clipboard/clipboard';
 
-import AppText from '../widgets/AppText';
+import AppText from '../shared/ui/AppText';
 import LoadingOverlay from '../widgets/LoadingOverlay';
 import SummaryActionsList from '../widgets/SummaryActionsList';
 import TagButton from '../widgets/TagButton';
 import AudioPlayer from '../widgets/AudioPlayer';
 
-import { useTypography } from '../entities/typography';
+import { useTypography } from '../shared/model/typography';
 import { ocrSummarizeFromPhoto } from '../features/ocr/api';
 import { buildSummaryTts } from '../features/tts/api';
 import { addCalendarFrom } from '../features/calendar/export';

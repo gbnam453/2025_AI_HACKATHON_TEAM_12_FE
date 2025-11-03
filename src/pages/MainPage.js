@@ -4,7 +4,7 @@ import { View, StyleSheet, Alert, useWindowDimensions, Pressable, Image } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
-import AppText from '../widgets/AppText';
+import AppText from '../shared/ui/AppText';
 
 const RADIUS = 16;
 const BRAND = '#0EA5E9';

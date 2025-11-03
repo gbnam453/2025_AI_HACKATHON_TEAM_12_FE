@@ -2,11 +2,12 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { Text } from 'react-native';
+import { FONT_FAMILY } from '../shared/theme/fonts';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { enableScreens } from 'react-native-screens';
 
-import { TypographyProvider } from '../entities/typography';
+import { TypographyProvider } from '../shared/model/typography';
 
 import SplashPage from '../pages/SplashPage';
 import MainPage from '../pages/MainPage';
@@ -17,6 +18,10 @@ import SettingsPage from '../pages/SettingsPage';
 // 모든 Text에 OS 폰트 스케일 무시 전역 적용
 Text.defaultProps = Text.defaultProps || {};
 Text.defaultProps.allowFontScaling = false;
+Text.defaultProps.style = [
+    Text.defaultProps.style,
+    { fontFamily: FONT_FAMILY, fontWeight: 'normal' },
+];
 
 enableScreens();
 const Stack = createStackNavigator();
