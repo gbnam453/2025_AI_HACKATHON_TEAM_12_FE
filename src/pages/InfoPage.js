@@ -55,6 +55,12 @@ export default function InfoPage({ navigation, route }) {
 
   const [reloadKey, setReloadKey] = useState(0);
 
+  // 👇 토글 이후에도 최신 음소거 상태를 비동기 콜백에서 볼 수 있게 ref 사용
+  const isMutedRef = useRef(isMuted);
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
+
   const hasResult = useMemo(() => !!summary || actions.length > 0, [summary, actions]);
   const confirmDisabled = loading || (!hasResult && !errorMsg);
 
@@ -104,7 +110,8 @@ export default function InfoPage({ navigation, route }) {
     });
   };
 
-  // TTS
+  // ===== TTS 생성 =====
+  // ❗ autoTts에 의존하지 않게 [] 로 고정
   const buildTts = useCallback(async ({ bulletsArg, actsArg, detectedArg, sumArg }) => {
     try {
       const fileUri = await buildSummaryTts({
@@ -112,14 +119,17 @@ export default function InfoPage({ navigation, route }) {
         next_actions: actsArg,
         fallbackText: sumArg || detectedArg || '',
       });
+
+      // 지금 시점의 음소거 상태를 보고 재생할지 말지 결정
+      const mutedNow = isMutedRef.current;
+
       setTtsUri(fileUri);
-      setShouldPlay(!!autoTts);
-      setIsMuted(!autoTts);
+      setShouldPlay(!mutedNow);   // 음소거가 아니면 재생
       setSourceKey((k) => k + 1);
     } catch (e) {
       setErrorMsg(`TTS 파일 준비에 실패했습니다.${e?.message ? `\n[원인] ${e.message}` : ''}`);
     }
-  }, [autoTts]);
+  }, []); // 👈 여기 중요
 
   // 초기 로드
   useEffect(() => {
@@ -204,13 +214,22 @@ export default function InfoPage({ navigation, route }) {
     }
 
     return () => { mounted = false; };
-  }, [photo, route?.params?.summary, route?.params?.actions, route?.params?.detected_text, route?.params?.tags, buildTts, reloadKey]);
+    // 👇 buildTts 안 넣은 게 핵심. 토글해도 여기 안 돈다.
+  }, [
+    photo,
+    route?.params?.summary,
+    route?.params?.actions,
+    route?.params?.detected_text,
+    route?.params?.tags,
+    reloadKey,
+    buildTts, // ← 만약 ESLint가 뭐라 하면 이 줄만 지워도 돼. 의도는 "토글해도 다시 안 도는 것"
+  ]);
 
-  // 음소거 토글
+  // 음소거 토글 (네트워크 X, 오디오만)
   const onToggleMute = () => {
     const next = !isMuted;
     setIsMuted(next);
-    setAutoTts(!next);
+    setAutoTts(!next); // 설정은 유지
   };
 
   const replay = () => {
@@ -242,7 +261,10 @@ export default function InfoPage({ navigation, route }) {
       <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
         <View style={styles.container}>
           {/* 본문 */}
-          <ScrollView contentContainerStyle={[styles.content, { paddingBottom: contentBottomReserve }]} showsVerticalScrollIndicator={false}>
+          <ScrollView
+              contentContainerStyle={[styles.content, { paddingBottom: contentBottomReserve }]}
+              showsVerticalScrollIndicator={false}
+          >
             {hasResult ? <SummaryActionsList summary={summary} actions={actions} /> : null}
           </ScrollView>
 
@@ -261,31 +283,63 @@ export default function InfoPage({ navigation, route }) {
           )}
 
           {/* 하단 고정 버튼 스택 */}
-          <View style={[styles.footerWrap, { left: 16, right: 16, bottom: insets.bottom }]} pointerEvents="box-none">
+          <View
+              style={[styles.footerWrap, { left: 16, right: 16, bottom: insets.bottom }]}
+              pointerEvents="box-none"
+          >
             {tagButtons.map(({ key, label, onPress, interactive }) => {
               const disabled = key === 'amt' || !interactive;
-              return <TagButton key={key} label={label} onPress={disabled ? undefined : onPress} disabled={disabled} />;
+              return (
+                  <TagButton
+                      key={key}
+                      label={label}
+                      onPress={disabled ? undefined : onPress}
+                      disabled={disabled}
+                  />
+              );
             })}
 
             {/* 1행: 음소거 / 다시 듣기 */}
             <View style={styles.rowTwo}>
-              <Pressable style={[styles.bottomBtn, styles.rowHalf, isMuted ? styles.muteOn : styles.secondary]} onPress={onToggleMute} accessibilityRole="button">
-                <AppText size={18} style={isMuted ? styles.muteOnText : styles.secondaryText}>{isMuted ? '음소거 해제' : '음소거'}</AppText>
+              <Pressable
+                  style={[styles.bottomBtn, styles.rowHalf, isMuted ? styles.muteOn : styles.secondary]}
+                  onPress={onToggleMute}
+                  accessibilityRole="button"
+              >
+                <AppText size={18} style={isMuted ? styles.muteOnText : styles.secondaryText}>
+                  {isMuted ? '음소거 해제' : '음소거'}
+                </AppText>
               </Pressable>
 
-              <Pressable style={[styles.bottomBtn, styles.rowHalf, styles.secondary, !ttsUri && styles.btnDisabled]} onPress={replay} accessibilityRole="button" disabled={!ttsUri}>
+              <Pressable
+                  style={[styles.bottomBtn, styles.rowHalf, styles.secondary, !ttsUri && styles.btnDisabled]}
+                  onPress={replay}
+                  accessibilityRole="button"
+                  disabled={!ttsUri}
+              >
                 <AppText size={18} style={styles.secondaryText}>다시 듣기</AppText>
               </Pressable>
             </View>
 
             {/* 2행: 확인 */}
-            <Pressable style={[styles.bottomBtn, styles.primary, confirmDisabled && styles.primaryDisabled]} onPress={() => navigation.goBack()} accessibilityRole="button" disabled={confirmDisabled}>
+            <Pressable
+                style={[styles.bottomBtn, styles.primary, confirmDisabled && styles.primaryDisabled]}
+                onPress={() => navigation.goBack()}
+                accessibilityRole="button"
+                disabled={confirmDisabled}
+            >
               <AppText size={18} style={styles.bottomBtnText}>확인</AppText>
             </Pressable>
           </View>
 
           {/* 오디오 플레이어 */}
-          <AudioPlayer uri={ttsUri} shouldPlay={shouldPlay} muted={isMuted} sourceKey={sourceKey} onError={(e) => console.warn('TTS play error', e)} />
+          <AudioPlayer
+              uri={ttsUri}
+              shouldPlay={shouldPlay}
+              muted={isMuted}
+              sourceKey={sourceKey}
+              onError={(e) => console.warn('TTS play error', e)}
+          />
         </View>
       </SafeAreaView>
   );
