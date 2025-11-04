@@ -2,7 +2,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { View, StyleSheet, Alert, useWindowDimensions, Pressable, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused } from '@react-navigation/native';
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import AppText from '../shared/ui/AppText';
 
@@ -15,11 +15,14 @@ const GAP_LG = 20;  // 로고와 미리보기 사이 큰 여백
 export default function MainPage({ navigation }) {
   const insets = useSafeAreaInsets();
   const device = useCameraDevice('back');
+  const isFocused = useIsFocused();        // ← 이 화면에 있을 때만 true
   const cameraRef = useRef(null);
   const { width } = useWindowDimensions();
 
   // 중복 탭 방지
   const [isCapturing, setIsCapturing] = useState(false);
+
+  // 화면에 다시 들어오면 캡처 가능 상태로 되돌림
   useFocusEffect(
       useCallback(() => {
         setIsCapturing(false);
@@ -32,13 +35,16 @@ export default function MainPage({ navigation }) {
 
   const onCapture = async () => {
     if (isCapturing) return;
+    if (!cameraRef.current) {
+      Alert.alert('촬영 실패', '카메라가 아직 준비되지 않았어요.');
+      return;
+    }
     setIsCapturing(true);
     try {
-      if (!cameraRef.current) throw new Error('camera-not-ready');
       const photo = await cameraRef.current.takePhoto({ flash: 'off' });
-
-      // 네트워크 업로드는 InfoPage에서 처리 (사진만 전달)
+      // 사진만 넘기고 InfoPage에서 업로드
       navigation.navigate('InfoPage', { photo });
+      // 여기서는 굳이 setIsCapturing(false) 안 해도 됨 (화면이 바뀌니까)
     } catch (e) {
       Alert.alert('촬영 실패', '카메라 상태를 확인해주세요.');
       setIsCapturing(false);
@@ -58,7 +64,7 @@ export default function MainPage({ navigation }) {
           />
         </View>
 
-        {/* 본문 */}
+        {/* 본문: 미리보기 + (유동 비율) 촬영:하단버튼 = 2:1 */}
         <View style={[styles.body, { paddingBottom: insets.bottom + GAP_MD }]}>
           {/* 미리보기 */}
           <View style={[styles.previewWindow, { width: previewWidth, height: previewHeight, marginTop: GAP_LG }]}>
@@ -67,7 +73,7 @@ export default function MainPage({ navigation }) {
                     ref={cameraRef}
                     style={StyleSheet.absoluteFill}
                     device={device}
-                    isActive
+                    isActive={isFocused}   // ← 포커스일 때만 카메라 ON, 캡처 중이라도 끄지 않음
                     photo
                 />
             ) : (
